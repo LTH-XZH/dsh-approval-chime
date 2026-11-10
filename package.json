@@ -1,33 +1,57 @@
 {
-  "name": "dsh-approval-chime",
+  "name": "dsh-approval-chime-win",
   "version": "1.0.0",
   "description": "Plays a short Windows notification chime when DeepSeek Harness asks you to approve a tool request.",
   "type": "module",
-  "license": "MIT",
-  "keywords": [
-    "dsh",
-    "dsh-plugin",
-    "deepseek-harness",
-    "notification",
-    "sound",
-    "approval",
-    "windows"
-  ],
+  "main": "./index.js",
   "exports": {
     ".": "./index.js",
     "./locale/*.json": "./locale/*.json",
-    "./icon": "./icon.svg"
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
   },
   "files": [
     "index.js",
     "cordis.patch.yml",
     "locale/en.json",
     "locale/zh.json",
-    "icon.svg"
+    "icon.svg",
+    "CHANGELOG.md"
   ],
-  "os": [
-    "win32"
+  "icon": "./icon.svg",
+  "license": "MIT",
+  "author": {
+    "name": "LTH-XZH",
+    "url": "https://github.com/LTH-XZH"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/LTH-XZH/dsh-approval-chime.git"
+  },
+  "homepage": "https://github.com/LTH-XZH/dsh-approval-chime#readme",
+  "bugs": {
+    "url": "https://github.com/LTH-XZH/dsh-approval-chime/issues"
+  },
+  "engines": {
+    "dsh": ">=0.2.1-rc.3 <0.3.0"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "notification",
+    "sound",
+    "chime",
+    "approval",
+    "windows"
   ],
+  "scripts": {
+    "test": "node test/wav.test.mjs",
+    "check": "node --check index.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
