@@ -11,9 +11,13 @@
  * Playback goes straight to winmm.dll!PlaySoundW through koffi, which ships with
  * the DSH desktop runtime: no child process, no startup delay, and it works while
  * the window is minimized or hidden in the tray.
+ *
+ * Windows notification sounds are mastered quietly (around -12 dBFS peak), so the
+ * plugin reads the system WAV once, applies digital gain in memory, and plays that
+ * buffer with SND_MEMORY. Nothing derived from it is written to disk or shipped.
  */
 import { createRequire } from 'node:module'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { spawn } from 'node:child_process'
 
@@ -29,8 +33,13 @@ const DEFAULT_SOUNDS = [
   'C:\\Windows\\Media\\Windows Notify Email.wav',
 ]
 
+/** Gain applied to the system WAV; override with DSH_APPROVAL_CHIME_GAIN_DB. */
+const DEFAULT_GAIN_DB = 9
+
 /** SND_FILENAME | SND_ASYNC | SND_NODEFAULT */
-const PLAY_FLAGS = 0x00020000 | 0x00000001 | 0x00000002
+const FILE_FLAGS = 0x00020000 | 0x00000001 | 0x00000002
+/** SND_MEMORY | SND_ASYNC | SND_NODEFAULT */
+const MEMORY_FLAGS = 0x00000004 | 0x00000001 | 0x00000002
 
 /** Collapse a burst of parallel tool requests into one sound. */
 const MIN_INTERVAL_MS = 1200
@@ -44,6 +53,64 @@ function resolveSound() {
   const override = process.env.DSH_APPROVAL_CHIME_WAV
   if (override !== undefined && override.length > 0 && existsSync(override)) return override
   return DEFAULT_SOUNDS.find((candidate) => existsSync(candidate))
+}
+
+/**
+ * Read the gain override, clamped to a range that cannot destroy the sound.
+ * @returns gain in decibels.
+ */
+function resolveGainDb() {
+  const raw = Number(process.env.DSH_APPROVAL_CHIME_GAIN_DB)
+  if (!Number.isFinite(raw)) return DEFAULT_GAIN_DB
+  return Math.min(12, Math.max(0, raw))
+}
+
+/**
+ * Locate the PCM data chunk of a RIFF/WAVE buffer.
+ * @param buffer - whole file.
+ * @returns the byte range of the samples, or undefined when the file is not
+ * 16-bit PCM (those are played untouched instead).
+ */
+function readPcm16(buffer) {
+  if (buffer.length < 12) return undefined
+  if (buffer.toString('ascii', 0, 4) !== 'RIFF' || buffer.toString('ascii', 8, 12) !== 'WAVE') return undefined
+  let offset = 12
+  let bitsPerSample = 0
+  let audioFormat = 0
+  let data
+  while (offset + 8 <= buffer.length) {
+    const id = buffer.toString('ascii', offset, offset + 4)
+    const size = buffer.readUInt32LE(offset + 4)
+    const body = offset + 8
+    if (id === 'fmt ' && size >= 16) {
+      audioFormat = buffer.readUInt16LE(body)
+      bitsPerSample = buffer.readUInt16LE(body + 14)
+    } else if (id === 'data') {
+      data = { offset: body, size: Math.min(size, buffer.length - body) }
+    }
+    offset = body + size + (size % 2)
+    if (data !== undefined && audioFormat !== 0) break
+  }
+  if (data === undefined || audioFormat !== 1 || bitsPerSample !== 16) return undefined
+  return data
+}
+
+/**
+ * Amplify 16-bit PCM samples in a copy of the file, keeping the header intact.
+ * @param buffer - whole file.
+ * @param gainDb - digital gain.
+ * @returns the amplified WAV image, or undefined when the file is not PCM 16.
+ */
+function amplifyPcm16(buffer, gainDb) {
+  const chunk = readPcm16(buffer)
+  if (chunk === undefined) return undefined
+  const out = Buffer.from(buffer)
+  const gain = 10 ** (gainDb / 20)
+  for (let i = chunk.offset; i + 1 < chunk.offset + chunk.size; i += 2) {
+    const scaled = out.readInt16LE(i) * gain
+    out.writeInt16LE(scaled > 32767 ? 32767 : scaled < -32768 ? -32768 : Math.round(scaled), i)
+  }
+  return out
 }
 
 /**
@@ -66,22 +133,25 @@ function resolveKoffi() {
 }
 
 /**
- * Bind winmm!PlaySoundW once.
- * @returns the bound function, or null when the FFI route is unavailable.
+ * Bind winmm!PlaySoundW for memory and file playback.
+ * @returns the bound functions, or undefined when the FFI route is unavailable.
  */
 function bindPlaySound() {
   const path = resolveKoffi()
   if (path === undefined) {
     console.warn('[dsh-approval-chime] koffi was not found; falling back to a PowerShell player')
-    return null
+    return undefined
   }
   try {
     const koffi = require(path)
     const winmm = koffi.load('winmm.dll')
-    return winmm.func('bool PlaySoundW(str16 pszSound, void *hmod, uint32_t fdwSound)')
+    return {
+      playMemory: winmm.func('bool PlaySoundW(void *pszSound, void *hmod, uint32_t fdwSound)'),
+      playFile: winmm.func('bool PlaySoundW(str16 pszSound, void *hmod, uint32_t fdwSound)'),
+    }
   } catch (error) {
     console.warn('[dsh-approval-chime] winmm binding failed; falling back to a PowerShell player', error)
-    return null
+    return undefined
   }
 }
 
@@ -119,23 +189,39 @@ export function apply(ctx) {
     return
   }
 
-  let playSound
+  let sound
   let bound = false
   let lastPlayedAt = 0
 
-  const play = () => {
-    if (!bound) {
-      bound = true
-      playSound = bindPlaySound()
+  const load = () => {
+    bound = true
+    const winmm = bindPlaySound()
+    let buffer
+    try {
+      buffer = amplifyPcm16(readFileSync(file), resolveGainDb())
+    } catch (error) {
+      console.warn('[dsh-approval-chime] could not prepare the chime buffer', error)
     }
-    if (playSound !== null) {
+    sound = { file, buffer, winmm }
+  }
+
+  const play = () => {
+    if (!bound) load()
+    if (sound.buffer !== undefined && sound.winmm !== undefined) {
       try {
-        if (playSound(file, null, PLAY_FLAGS) === true) return
+        if (sound.winmm.playMemory(sound.buffer, null, MEMORY_FLAGS) === true) return
+      } catch {
+        /* fall through to file playback */
+      }
+    }
+    if (sound.winmm !== undefined) {
+      try {
+        if (sound.winmm.playFile(sound.file, null, FILE_FLAGS) === true) return
       } catch {
         /* fall through to the external player */
       }
     }
-    spawnPlayer(file)
+    spawnPlayer(sound.file)
   }
 
   ctx.on('approval/request', function (request, next) {

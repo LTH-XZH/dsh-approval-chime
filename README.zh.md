@@ -34,15 +34,12 @@ macOS 和 Linux 不支持：插件会检测到并保持静默，不会报错。
 3. **重启应用。** 宿主插件代码只在启动时加载，不重启不会生效。
 4. 在 **设置 → 插件** 里应该能看到 *审批提示音* 这一行（图标是铃铛加一个红点）。
 
-## 卸载
-
-让 agent 移除 `dsh-approval-chime` bundle，或者在 **设置 → 插件** 里把它关掉。重启后彻底卸载。
-
 ## 配置
 
 | 想改什么 | 怎么改 |
 |---|---|
 | 换声音 | 设置环境变量 `DSH_APPROVAL_CHIME_WAV` 为任意 `.wav` 的绝对路径（比如你自己的 `D:\sounds\ding.wav`），优先级最高。 |
+| 音量 | 设置环境变量 `DSH_APPROVAL_CHIME_GAIN_DB`（默认 `9`，限制在 0–12）。Windows 的通知音本身录得比较轻，插件在**内存里**放大 PCM 采样后再播放，不会把修改过的音频写到磁盘。 |
 | 内置回退列表 | `index.js` 里的 `DEFAULT_SOUNDS`，取第一个存在的文件。默认 `Windows Notify System Generic.wav`，其后是 Messaging、Calendar、Email。 |
 | 合并间隔 | `index.js` 里的 `MIN_INTERVAL_MS`（默认 1200 毫秒）。这个窗口内的并发工具调用只响一声。 |
 
@@ -51,20 +48,20 @@ macOS 和 Linux 不支持：插件会检测到并保持静默，不会报错。
 ## 实现要点
 
 - 挂在宿主侧的 `approval/request` waterfall 上，处理完立即 `next()` 交还，**不参与审批决策**：即使播放失败，审批流程也不受影响。
-- 通过 `winmm.dll!PlaySoundW`（`SND_ASYNC`）播放，FFI 用桌面端自带的 `koffi`（`resources/app.asar.unpacked/dsh/node_modules/koffi`）。没有子进程、没有启动延迟、不闪控制台窗口。
-- 绑定失败时回退到隐藏窗口的 PowerShell `SoundPlayer`，并在宿主控制台打一条警告。
+- 启动后读取一次选定的 WAV，在内存里对 16-bit PCM 采样做数字增益，再用 `winmm.dll!PlaySoundW`（`SND_MEMORY | SND_ASYNC`）播放这个缓冲区。FFI 用桌面端自带的 `koffi`（`resources/app.asar.unpacked/dsh/node_modules/koffi`），没有子进程、没有启动延迟、不闪控制台窗口。
+- 文件不是 16-bit PCM 时退回 `SND_FILENAME` 直接播放（不放大）；FFI 绑定失败时退回隐藏窗口的 PowerShell `SoundPlayer`。两条回退都会在宿主控制台打警告。
 
 ## 排障
 
 | 现象 | 检查 |
 |---|---|
 | 完全没声音 | Windows 音量、是否静音，以及音量合成器里 *DeepSeek Harness* 这一项。声音走的是应用的音频会话。 |
+| 太轻或太响 | 调 `DSH_APPROVAL_CHIME_GAIN_DB`（0–12）。超过约 10 dB 后采样开始被削平，会听出失真。 |
 | 应用更新后不响了 | 可能是自带的 `koffi` 路径变了；宿主控制台会有 `[dsh-approval-chime]` 警告。请提 issue。 |
 | 一声响两次 | 装了两份 bundle，删掉一份并重启。 |
-| 太响 / 太轻 | 用 `DSH_APPROVAL_CHIME_WAV` 指向别的 wav，例如 `C:\Windows\Media\Windows Notify Calendar.wav` 或 `C:\Windows\Media\Windows Ding.wav`。 |
 
 ## 许可与来源
 
 - 代码：MIT，见 [LICENSE](LICENSE)。
-- 声音：仓库**不携带任何音频**，只引用你 Windows 系统里已有的 `C:\Windows\Media\...`，因此不涉及音频版权再分发。
+- 声音：仓库**不携带任何音频**，也不往磁盘写音频。只读取你 Windows 系统里已有的 `C:\Windows\Media\...`，在内存里放大后播放，因此不涉及音频版权再分发。
 - `koffi` 是 Niels Martignène 的独立项目（MIT），本仓库不打包它。
