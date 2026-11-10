@@ -77,6 +77,10 @@ npm pack --dry-run    # what would be published
 
 To try the checkout directly, paste its folder path into **Add plugin** instead of the Git address; the install links the folder in place.
 
+## Contributing
+
+Issues and pull requests are welcome. The ground rules are in [CONTRIBUTING.md](CONTRIBUTING.md); the Chinese version is [CONTRIBUTING.zh.md](CONTRIBUTING.zh.md).
+
 ## License
 
 MIT, see [LICENSE](LICENSE). The plugin ships no audio: it reads WAV files that already exist on your Windows installation.

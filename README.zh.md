@@ -77,6 +77,10 @@ npm pack --dry-run    # 看发布包里有什么
 
 想直接试当前目录：把目录路径粘贴到 **添加插件** 里（代替 Git 地址），安装会链接这个目录。
 
+## 参与贡献
+
+欢迎提 issue 和 PR，约定见 [CONTRIBUTING.zh.md](CONTRIBUTING.zh.md)（English: [CONTRIBUTING.md](CONTRIBUTING.md)）。
+
 ## 许可
 
 MIT，见 [LICENSE](LICENSE)。仓库不携带任何音频：只读取你 Windows 系统里已有的 WAV 文件。
