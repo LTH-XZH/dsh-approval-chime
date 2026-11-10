@@ -32,8 +32,10 @@ release on GitHub. Both are driven by the `Release` workflow.
    ```
 
 5. The workflow runs the tests, refuses a tag that disagrees with
-   `package.json`, publishes with provenance, and attaches the packed tarball
-   to a new GitHub Release.
+   `package.json`, publishes with provenance when the version is not on npm
+   yet, and attaches the packed tarball to a new GitHub Release. If you
+   published that version by hand first, the workflow skips the npm step and
+   only creates the Release.
 
 ## Publishing by hand
 
