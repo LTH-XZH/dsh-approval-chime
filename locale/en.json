@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Approval Chime",
+    "description": "Plays a short Windows notification chime when a tool asks for your approval, so you do not have to watch the window."
+  }
+}

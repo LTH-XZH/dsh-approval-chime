@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Bell with an alert dot">
+  <rect width="64" height="64" rx="14" fill="#1f2a37"/>
+  <path d="M31 12a11.5 11.5 0 0 0-11.5 11.5v8.2L15.2 39a1.6 1.6 0 0 0 1.35 2.45h28.9A1.6 1.6 0 0 0 46.8 39l-4.3-7.3v-8.2A11.5 11.5 0 0 0 31 12Z" fill="#f5c451"/>
+  <path d="M25.6 43.6h10.8a5.4 5.4 0 0 1-10.8 0Z" fill="#e0a83a"/>
+  <circle cx="47.5" cy="17.5" r="6.5" fill="#ff5a5f"/>
+</svg>
