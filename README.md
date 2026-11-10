@@ -16,15 +16,13 @@ tool asks for approval  →  ♪ Windows Notify System Generic  →  the normal 
 | | |
 |---|---|
 | OS | Windows 10 / 11 |
-| App | DeepSeek Harness 0.2.1-rc.3 or newer |
+| App | DeepSeek Harness 0.2.1-rc.3 or newer (0.2.x) |
 
 The plugin is silent (but harmless) on macOS and Linux.
 
 ## Install
 
-The plugin is not on npm yet, so install it from this repository. There is no build step and no dependency to install.
-
-### A. One line (needs Git for Windows)
+You need **Git for Windows** installed: the app uses it to download the plugin. There is no build step and no dependency to install.
 
 1. In DeepSeek Harness, open **Plugins** in the sidebar.
 2. Click **Add plugin**.
@@ -32,12 +30,9 @@ The plugin is not on npm yet, so install it from this repository. There is no bu
 4. When it finishes, click **Enable now**.
 5. **Quit DeepSeek Harness completely and open it again.** Closing the window is not enough — right-click the tray icon and choose Quit.
 
-### B. ZIP download (no Git needed)
+That is the whole install.
 
-1. On this page click **Code → Download ZIP**, and unzip it into a folder you will keep, for example `D:\dsh-approval-chime`. Do not move or delete that folder afterwards.
-2. In DeepSeek Harness: **Plugins → Add plugin**.
-3. Paste the folder path (`D:\dsh-approval-chime`) and press Enter.
-4. Click **Enable now**, then quit and reopen the app as in step A5.
+> No Git, or cannot reach GitHub? Click **Code → Download ZIP** on this page, unzip it to a folder you will keep (for example `D:\dsh-approval-chime`), and paste that folder path into the same **Add plugin** box.
 
 ### Check that it works
 
@@ -80,7 +75,7 @@ npm test              # tests for the WAV parsing and gain code
 npm pack --dry-run    # what would be published
 ```
 
-To try the checkout directly, add the folder as a plugin (option B above); the install links the folder in place.
+To try the checkout directly, paste its folder path into **Add plugin** instead of the Git address; the install links the folder in place.
 
 ## License
 
