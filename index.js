@@ -71,7 +71,7 @@ function resolveGainDb() {
  * @returns the byte range of the samples, or undefined when the file is not
  * 16-bit PCM (those are played untouched instead).
  */
-function readPcm16(buffer) {
+export function readPcm16(buffer) {
   if (buffer.length < 12) return undefined
   if (buffer.toString('ascii', 0, 4) !== 'RIFF' || buffer.toString('ascii', 8, 12) !== 'WAVE') return undefined
   let offset = 12
@@ -101,7 +101,7 @@ function readPcm16(buffer) {
  * @param gainDb - digital gain.
  * @returns the amplified WAV image, or undefined when the file is not PCM 16.
  */
-function amplifyPcm16(buffer, gainDb) {
+export function amplifyPcm16(buffer, gainDb) {
   const chunk = readPcm16(buffer)
   if (chunk === undefined) return undefined
   const out = Buffer.from(buffer)
