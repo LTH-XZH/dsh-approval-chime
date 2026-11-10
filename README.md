@@ -18,7 +18,7 @@ tool asks for approval  →  ♪ Windows Notify System Generic  →  the normal 
 | OS | Windows 10 / 11 |
 | App | DeepSeek Harness 0.2.1-rc.3 or newer (0.2.x) |
 
-The plugin is silent (but harmless) on macOS and Linux.
+The plugin is Windows-only today. The author has no macOS or Linux hardware to develop and verify against, so on those systems it installs cleanly but stays silent. If you have such a machine, contributions are very welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Install
 
@@ -71,15 +71,16 @@ Windows notification sounds are mastered quietly, so the plugin amplifies the sa
 ## Development
 
 ```sh
-npm test              # tests for the WAV parsing and gain code
-npm pack --dry-run    # what would be published
+node test/wav.test.mjs    # WAV parsing and gain tests
 ```
+
+The tests use Node's built-in test runner, so no package manager or registry is involved.
 
 To try the checkout directly, paste its folder path into **Add plugin** instead of the Git address; the install links the folder in place.
 
 ## Contributing
 
-Issues and pull requests are welcome. The ground rules are in [CONTRIBUTING.md](CONTRIBUTING.md); the Chinese version is [CONTRIBUTING.zh.md](CONTRIBUTING.zh.md).
+All suggestions are welcome — features, wording, or code. The ground rules are in [CONTRIBUTING.md](CONTRIBUTING.md); the Chinese version is [CONTRIBUTING.zh.md](CONTRIBUTING.zh.md).
 
 ## License
 

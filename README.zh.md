@@ -18,7 +18,7 @@
 | 操作系统 | Windows 10 / 11 |
 | 应用 | DeepSeek Harness 0.2.1-rc.3 及以上（0.2.x） |
 
-在 macOS / Linux 上也能装，但不会发声，也不影响其他功能。
+目前只支持 Windows。受设备与硬件条件限制，作者暂时无法开发并验证 macOS 与 Linux 版本；插件在这两个平台上可以正常安装，但会保持静默。如果你有相应环境，非常期待你的贡献，见 [CONTRIBUTING.zh.md](CONTRIBUTING.zh.md)。
 
 ## 安装
 
@@ -71,15 +71,16 @@ Windows 的通知音本身录得比较轻，插件会在**内存里**把音量�
 ## 开发
 
 ```sh
-npm test              # WAV 解析与增益的测试
-npm pack --dry-run    # 看发布包里有什么
+node test/wav.test.mjs    # WAV 解析与增益测试
 ```
+
+测试用的是 Node 自带的 test runner，不涉及包管理器或 npm 源。
 
 想直接试当前目录：把目录路径粘贴到 **添加插件** 里（代替 Git 地址），安装会链接这个目录。
 
 ## 参与贡献
 
-欢迎提 issue 和 PR，约定见 [CONTRIBUTING.zh.md](CONTRIBUTING.zh.md)（English: [CONTRIBUTING.md](CONTRIBUTING.md)）。
+欢迎一切建议——功能、文案、代码都可以。约定见 [CONTRIBUTING.zh.md](CONTRIBUTING.zh.md)（English: [CONTRIBUTING.md](CONTRIBUTING.md)）。
 
 ## 许可
 

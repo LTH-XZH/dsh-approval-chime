@@ -12,6 +12,8 @@ jobs:
   publish:
     name: Publish to npm and GitHub Releases
     runs-on: ubuntu-latest
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -33,7 +35,7 @@ jobs:
           "
 
       - name: Run tests
-        run: npm test
+        run: node test/wav.test.mjs
 
       - name: Check whether this version is already on npm
         id: check
@@ -46,8 +48,12 @@ jobs:
             echo "published=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Notice when npm publishing is not configured
+        if: steps.check.outputs.published == 'false' && env.NPM_TOKEN == ''
+        run: echo "::notice::NPM_TOKEN is not set, so this run only creates the GitHub Release."
+
       - name: Publish to npm
-        if: steps.check.outputs.published == 'false'
+        if: steps.check.outputs.published == 'false' && env.NPM_TOKEN != ''
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

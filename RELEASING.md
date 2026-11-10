@@ -1,7 +1,9 @@
 # Releasing
 
-The package is published as `dsh-approval-chime-win` on npm and as a tagged
-release on GitHub. Both are driven by the `Release` workflow.
+The package can be published as `dsh-approval-chime-win` on npm and as a
+tagged release on GitHub. Both are driven by the `Release` workflow, but the
+npm half only runs once the `NPM_TOKEN` secret exists: a tag without it just
+creates the GitHub Release.
 
 ## One-time setup
 
@@ -32,10 +34,10 @@ release on GitHub. Both are driven by the `Release` workflow.
    ```
 
 5. The workflow runs the tests, refuses a tag that disagrees with
-   `package.json`, publishes with provenance when the version is not on npm
-   yet, and attaches the packed tarball to a new GitHub Release. If you
-   published that version by hand first, the workflow skips the npm step and
-   only creates the Release.
+   `package.json`, and attaches the packed tarball to a new GitHub Release. It
+   publishes to npm only when the version is not on npm yet **and**
+   `NPM_TOKEN` is configured; otherwise it says so and skips that step. A
+   version you already published by hand is skipped as well.
 
 ## Publishing by hand
 
@@ -43,7 +45,7 @@ If the workflow is unavailable (for example, on a fork), the same steps work
 locally:
 
 ```sh
-npm test
+node test/wav.test.mjs
 npm pack                 # inspect the tarball first
 npm publish --access public
 gh release create v1.1.0 ./*.tgz --generate-notes
